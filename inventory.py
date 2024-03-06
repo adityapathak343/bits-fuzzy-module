@@ -39,7 +39,7 @@ print("Minimizing in T\nt1 = %f | T = %f | k = %f | Q = %f | Z = %f" %(t1, T, k,
 
 #FUZZY IMPLEMENTATION
 print('\n')
-d = tfn(460, 500, 600)
+d = TFN(460, 500, 600)
 print("Fuzzy Demand is ", d)
 
 def func(space):
@@ -64,7 +64,7 @@ print("Fuzzy Minimizing in T and defuzzifying\nd = %f | DOF = %f | t1 = %f | T =
 
 
 #INTUITIONISTIC FUZZY NUMBERS
-d = itfn(460, 400, 500, 600, 660)
+d = ITFN(460, 400, 500, 600, 660)
 print("Intuitionistic Fuzzy Demand is ", d)
 def func(space):
     itff = minimizingFunction(space, d=d)

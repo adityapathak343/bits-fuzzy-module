@@ -7,6 +7,9 @@ class intNum:
     def __str__(self):
         return "INTNUM [{}, {}]".format(str(self.lowLim), str(self.upLim))
 
+    def __neg__(self):
+        return intNum(-self.upLim, -self.lowLim)
+
     def __add__(self, rhs):
         return intNum(self.lowLim+rhs.lowLim, self.upLim+rhs.upLim)
 
@@ -14,6 +17,8 @@ class intNum:
         return intNum(self.lowLim-rhs.upLim, self.upLim-rhs.lowLim)
 
     def __mul__(self, rhs):
+        if type(rhs) == float or type(rhs) == int:
+            return intNum(self.lowLim*rhs, self.upLim*rhs)
         rho = [self.lowLim*rhs.lowLim, self.lowLim*rhs.upLim, self.upLim*rhs.lowLim, self.upLim*rhs.upLim]
         return intNum(min(rho), max(rho))
 
@@ -21,10 +26,12 @@ class intNum:
         return self*rhs
 
     def __truediv__(self, other):
-        return self * intNum(1/other.lowLim, 1/other.upLim)
+        if type(other) == float or type(other) == int:
+            return intNum(self.lowLim/other, self.upLim/other)
+        return self * intNum(1/other.upLim, 1/other.lowLim)
 
     def __rtruediv__(self, other):
-        return other * intNum(1/self.lowLim, 1/self.upLim)
+        return other * intNum(1/self.upLim, 1/self.lowLim)
 
     def __pow__(self, other):
         try:
@@ -49,14 +56,25 @@ class intNum:
     def __or__(self, rhs):
         if max(self.lowLim, rhs.lowLim) <= min(self.upLim, rhs.upLim):
             return intNum(min(rhs.lowLim, self.lowLim), max(rhs.upLim, self.upLim))
-    def __or__ (self, rhs):
+    def __ror__ (self, rhs):
         return self|rhs
 
     def inNum(self, x):
-        return self.lowLim < x < self.upLim
+        return self.lowLim <= x <= self.upLim
+
+    def toFuzzySet(self, lowLim, upLim, N=1001):
+        h = 1 / N
+        elements = [FuzzyElement(lowLim + i * h * (upLim - lowLim), float(self.inNum(lowLim + i * h * (upLim - lowLim)))) for i in
+                    range(N + 1)]
+        return FuzzySet(elements)
 
 
-class tfn:
+
+# class FuzzyNumber:
+#     def __init__(self):
+
+
+class TFN:
     def __init__(self, a, b, c):
         self.a = a
         self.b = b
@@ -68,14 +86,14 @@ class tfn:
         return "TFN <%f, %f, %f>" % (self.a, self.b, self.c)
 
     def __neg__(self):
-        return tfn(-self.c, -self.b, -self.a)
+        return TFN(-self.c, -self.b, -self.a)
 
     def __add__(self, rhs):
         try:
             rhs = float(rhs)
-            return tfn(self.a+rhs, self.b+rhs, self.c+rhs)
+            return TFN(self.a + rhs, self.b + rhs, self.c + rhs)
         except:
-            return tfn(self.a + rhs.a, self.b + rhs.b, self.c + rhs.c)
+            return TFN(self.a + rhs.a, self.b + rhs.b, self.c + rhs.c)
 
     def __radd__(self, rhs):
         return self+rhs
@@ -83,9 +101,9 @@ class tfn:
     def __sub__(self, rhs):
         try:
             rhs = float(rhs)
-            return tfn(self.a-rhs, self.b-rhs, self.c-rhs)
+            return TFN(self.a - rhs, self.b - rhs, self.c - rhs)
         except:
-            return tfn(self.a - rhs.c, self.b - rhs.b, self.c - rhs.c)
+            return TFN(self.a - rhs.c, self.b - rhs.b, self.c - rhs.c)
 
     def __rsub__(self, other):
         return -(self-other)
@@ -96,10 +114,10 @@ class tfn:
     def __mul__(self, other):
         try:
             factor = float(other)
-            return tfn(self.a * factor, self.b * factor, self.c * factor)
+            return TFN(self.a * factor, self.b * factor, self.c * factor)
         except TypeError:
             if type(self) == type(other):
-                return tfn(self.a * other.a, self.b * other.b, self.c * other.c)
+                return TFN(self.a * other.a, self.b * other.b, self.c * other.c)
             raise NotImplemented
 
 
@@ -112,30 +130,28 @@ class tfn:
         if power > 0:
             return self*(self**(power-1))
         if power == 0:
-            return tfn(1, 1, 1)
+            return TFN(1, 1, 1)
         if power < 0:
             return 1/(self**-power)
 
     def __truediv__(self, other):
         try:
             factor = float(other)
-            return tfn(self.a / factor, self.b / factor, self.c / factor)
+            return TFN(self.a / factor, self.b / factor, self.c / factor)
         except TypeError:
             if type(self) == type(other):
-                return tfn(self.a / other.c, self.b / other.b, self.c / other.a)
+                return TFN(self.a / other.c, self.b / other.b, self.c / other.a)
             raise NotImplemented
 
     def __rtruediv__(self, other):
         try:
             factor = float(other)
-            return tfn(factor/self.c, factor/self.b, factor/self.a)
+            return TFN(factor / self.c, factor / self.b, factor / self.a)
         except TypeError:
             if type(self) == type(other):
                 return other/self
             raise NotImplemented
 
-
-    
     def mu(self, x: float):
         if x<self.a:
             return 0
@@ -186,7 +202,7 @@ class tfn:
 
 
 
-class itfn:
+class ITFN:
     def __init__(self, a1, a2, b, c1, c2):
         self.a1 = a1
         self.a2 = a2
@@ -201,14 +217,14 @@ class itfn:
         return "ITFN <%f, %f, %f>; <%f, %f, %f>" % (self.a1, self.b, self.c1, self.a2, self.b, self.c2)
 
     def __neg__(self):
-        return itfn(-self.c1, -self.c2, -self.b, -self.a1, -self.a2)
+        return ITFN(-self.c1, -self.c2, -self.b, -self.a1, -self.a2)
 
     def __add__(self, rhs):
         try:
             rhs = float(rhs)
-            return itfn(self.a1 + rhs, self.a2 + rhs, self.b + rhs, self.c1 + rhs, self.c2 + rhs)
+            return ITFN(self.a1 + rhs, self.a2 + rhs, self.b + rhs, self.c1 + rhs, self.c2 + rhs)
         except:
-            return itfn(self.a1 + rhs.a1, self.a2 + rhs.a2, self.b + rhs.b, self.c1 + rhs.c1, self.c2 + rhs.c2)
+            return ITFN(self.a1 + rhs.a1, self.a2 + rhs.a2, self.b + rhs.b, self.c1 + rhs.c1, self.c2 + rhs.c2)
 
     def __radd__(self, rhs):
         return self + rhs
@@ -229,10 +245,10 @@ class itfn:
     def __mul__(self, other):
         try:
             factor = float(other)
-            return itfn(self.a1 * factor, self.a2 * factor, self.b * factor, self.c1 * factor, self.c2 * factor)
+            return ITFN(self.a1 * factor, self.a2 * factor, self.b * factor, self.c1 * factor, self.c2 * factor)
         except TypeError:
             if type(self) == type(other):
-                return itfn(self.a1 * other.a1, self.a2 * other.a2,  self.b * other.b, self.c1 * other.c1, self.c2 * other.c2)
+                return ITFN(self.a1 * other.a1, self.a2 * other.a2, self.b * other.b, self.c1 * other.c1, self.c2 * other.c2)
             raise NotImplemented
 
     def __rmul__(self, other):
@@ -244,23 +260,23 @@ class itfn:
         if power > 0:
             return self * (self ** (power - 1))
         if power == 0:
-            return itfn(1, 1, 1, 1, 1)
+            return ITFN(1, 1, 1, 1, 1)
         if power < 0:
             return 1 / (self ** -power)
 
     def __truediv__(self, other):
         try:
             factor = float(other)
-            return self * itfn(1/factor, 1/factor, 1/factor, 1/factor, 1/factor)
+            return self * ITFN(1 / factor, 1 / factor, 1 / factor, 1 / factor, 1 / factor)
         except TypeError:
             if type(self) == type(other):
-                return itfn(self.a1 / other.c1, self.a2 / other.c2, self.b / other.b, self.c1 / other.a1, self.c2 / other.a2)
+                return ITFN(self.a1 / other.c1, self.a2 / other.c2, self.b / other.b, self.c1 / other.a1, self.c2 / other.a2)
             raise NotImplemented
 
     def __rtruediv__(self, other):
         try:
             factor = float(other)
-            return factor * (itfn(1,1,1,1,1)/self)
+            return factor * (ITFN(1, 1, 1, 1, 1) / self)
         except TypeError:
             if type(self) == type(other):
                 return other / self
@@ -325,3 +341,99 @@ class itfn:
         except ModuleNotFoundError:
             print("Matplotlib is needed to use the plot feature")
 
+class TrFN:
+    def __init__(self, a, b, c, d):
+        self.a = a
+        self.b = b
+        self.c = c
+        self.d = d
+
+
+    def __neg__(self):
+        return TrFN(-self.d, -self.c, -self.b, -self.a)
+    def __add__(self, rhs):
+        try:
+            rhs = float(rhs)
+            return TrFN(self.a + rhs, self.b + rhs, self.c + rhs, self.d+rhs)
+        except:
+            return TrFN(self.a + rhs.a, self.b + rhs.b, self.c + rhs.c, self.d+rhs.d)
+
+    def __radd__(self, rhs):
+        return self+rhs
+
+    def __sub__(self, rhs):
+        try:
+            rhs = float(rhs)
+            return TrFN(self.a - rhs, self.b - rhs, self.c - rhs)
+        except:
+            return TrFN(self.a - rhs.d, self.b - rhs.c, self.c - rhs.b, self.d - rhs.a)
+
+    def __rsub__(self, other):
+        return -(self-other)
+
+    def __eq__(self, rhs):
+        return self.a == rhs.a and self.b == rhs.b and self.c == rhs.c and self.d == rhs.d
+
+    def __mul__(self, other):
+        try:
+            factor = float(other)
+            return TrFN(self.a * factor, self.b * factor, self.c * factor, self.d * factor)
+        except TypeError:
+            if type(self) == type(other):
+                return TrFN(self.a * other.a, self.b * other.b, self.c * other.c, self.d * other.d)
+            raise NotImplemented
+
+
+    def __rmul__(self, other):
+        return self*other
+
+    def __pow__(self, power, modulo=None):
+        if type(power)!=int:
+            raise NotImplemented
+        if power > 0:
+            return self*(self**(power-1))
+        if power == 0:
+            return TrFN(1, 1, 1, 1)
+        if power < 0:
+            return 1/(self**-power)
+
+    def __truediv__(self, other):
+        try:
+            factor = float(other)
+            return TFN(self.a / factor, self.b / factor, self.c / factor)
+        except TypeError:
+            if type(self) == type(other):
+                return TrFN(self.a / other.d, self.b / other.c, self.c / other.b, self.d / other.a)
+            raise NotImplemented
+
+    def __rtruediv__(self, other):
+        try:
+            factor = float(other)
+            return TrFN(factor/self.d, factor / self.c, factor / self.b, factor / self.a)
+        except TypeError:
+            return other/self
+    def mu(self, x):
+        a = self.a
+        b = self.b
+        c = self.c
+        d = self.d
+        if a<=x<b:
+            return (x-a)/(b-a)
+        elif b<=x<c:
+            return 1
+        elif c<=x<d:
+            return (d-x)/(d-c)
+        return 0
+    def alphaCut(self, alpha):
+        if alpha<=0:
+            return intNum(self.a, self.d)
+        elif alpha==1:
+            return intNum(self.b, self.c)
+        lowLim = self.a + alpha*(self.b-self.a)
+        upLim = self.d - alpha*(self.d-self.c)
+        return intNum(lowLim, upLim)
+
+    def toFuzzySet(self, lowLim, upLim, N=1001):
+        h = 1/N
+        elements = [FuzzyElement(lowLim + i*h*(upLim- lowLim), self.mu(lowLim + i*h*(upLim- lowLim))) for i in range(N+1)]
+        return FuzzySet(elements)
