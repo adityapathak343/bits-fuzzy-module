@@ -52,13 +52,16 @@ T = sol[0][0]
 Z = minimizingFunction([T], d=d)
 k = 100 + 1.22*d
 t1 = 500*T/(0.8*k)
+
 print("Fuzzy t1 is ", t1)
 print("Fuzzy Production Rate is ", k)
 Q = d*(T-t1)
+
 print("Fuzzy Inventory Lvl is ", Q)
 print("Fuzzy Cost is ", Z)
 zplt = Z.plot()
 plt.show()
+
 print("Fuzzy Minimizing in T and defuzzifying\nd = %f | DOF = %f | t1 = %f | T = %f | k = %f | Q = %f | Z = %f"
       %(d.yRankingIndex(), d.dof(), t1.yRankingIndex(), T, k.yRankingIndex(), Q.yRankingIndex(), Z.yRankingIndex()))
 

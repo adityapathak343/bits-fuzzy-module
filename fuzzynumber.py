@@ -195,6 +195,7 @@ class TFN:
         plt.ylabel(ylabel)
         return f
 
+
     def toFuzzySet(self, lowLim, upLim, N=1001):
         h = 1/N
         elements = [FuzzyElement(lowLim + i*h*(upLim- lowLim), self.mu(lowLim + i*h*(upLim- lowLim))) for i in range(N+1)]
@@ -432,6 +433,87 @@ class TrFN:
         lowLim = self.a + alpha*(self.b-self.a)
         upLim = self.d - alpha*(self.d-self.c)
         return intNum(lowLim, upLim)
+
+    def toFuzzySet(self, lowLim, upLim, N=1001):
+        h = 1/N
+        elements = [FuzzyElement(lowLim + i*h*(upLim- lowLim), self.mu(lowLim + i*h*(upLim- lowLim))) for i in range(N+1)]
+        return FuzzySet(elements)
+
+class LRFN:
+    def __init__(self, L, R, center, alpha, beta):
+        self.L = L
+        self.R = R
+        self.center = center
+        self.alpha = alpha
+        self.beta = beta
+
+    def __str__(self):
+        return "LRFN <center={}, alpha={}, beta={}>".format(self.center, self.alpha, self.beta)
+    def __neg__(self):
+        return LRFN(self.R, self.L, -self.center, self.beta, self.alpha)
+    def __add__(self, other):
+        try:
+            float(other)
+            return LRFN(self.L, self.R, self.center + other, self.alpha, self.beta)
+        except:
+            return LRFN(self.L, self.R, self.center + other.center, self.alpha + other.alpha, self.beta + other.beta)
+
+    def __radd__(self, other):
+        return self + other
+
+    def __sub__(self, other):
+        try:
+            float(other)
+            return LRFN(self.L, self.R, self.center - other, self.alpha, self.beta)
+        except:
+            return self + (-other)
+
+    def __rsub__(self, other):
+        return -self + other
+
+    def __mul__(self, other):
+        try:
+            float(other)
+            return LRFN(self.L, self.R, self.center * other, self.alpha*other, self.beta*other)
+        except:
+            if type(self) == type(other):
+                return LRFN(self.L, self.R, self.center*other.center, self.center*other.alpha + other.center*self.alpha- self.alpha * other.alpha, self.center*other.beta + other.center * self.beta + self.beta*other.beta)
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __truediv__(self, other):
+        try:
+            float(other)
+            return LRFN(self.L, self.R, self.center / other, self.alpha/other, self.beta/other)
+        except:
+            return self*LRFN(other.R, other.L, 1/other.center, other.beta/(other.center*(other.center+other.beta)), other.alpha/(other.center*(other.center-other.alpha)))
+
+    def __rtruediv__(self, other):
+        try:
+            float(other)
+            return other*LRFN(self.R, self.L, 1/self.center, self.beta/(self.center*(self.center+self.beta)), self.alpha/(self.center*(self.center-self.alpha)))
+        except:
+            return other/self
+
+    def mu(self, x):
+        if x < self.center:
+            return self.L((self.center - x)/self.alpha)
+        elif x > self.center:
+            return self.R((x - self.center)/self.beta)
+        else:
+            return 0
+
+    def defuzz(self, N=501):
+        lowLim = self.center - self.alpha
+        upLim = self.center + self.beta
+        h = 1/N
+        num = 0
+        dnom = 0
+        for i in range(N+1):
+            num += (lowLim + i * h * (upLim - lowLim)) * self.mu(lowLim + i * h * (upLim - lowLim))
+            dnom += self.mu(lowLim + i * h * (upLim - lowLim))
+        return num/dnom
 
     def toFuzzySet(self, lowLim, upLim, N=1001):
         h = 1/N
