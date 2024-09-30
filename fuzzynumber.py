@@ -1,4 +1,5 @@
 from fuzzysets import *
+
 class intNum:
     def __init__(self, lowLim:float, upLim:float):
         self.lowLim = lowLim
@@ -67,12 +68,6 @@ class intNum:
         elements = [FuzzyElement(lowLim + i * h * (upLim - lowLim), float(self.inNum(lowLim + i * h * (upLim - lowLim)))) for i in
                     range(N + 1)]
         return FuzzySet(elements)
-
-
-
-# class FuzzyNumber:
-#     def __init__(self):
-
 
 class TFN:
     def __init__(self, a, b, c):
@@ -195,13 +190,10 @@ class TFN:
         plt.ylabel(ylabel)
         return f
 
-
     def toFuzzySet(self, lowLim, upLim, N=1001):
         h = 1/N
         elements = [FuzzyElement(lowLim + i*h*(upLim- lowLim), self.mu(lowLim + i*h*(upLim- lowLim))) for i in range(N+1)]
         return FuzzySet(elements)
-
-
 
 class ITFN:
     def __init__(self, a1, a2, b, c1, c2):
@@ -349,9 +341,9 @@ class TrFN:
         self.c = c
         self.d = d
 
-
     def __neg__(self):
         return TrFN(-self.d, -self.c, -self.b, -self.a)
+
     def __add__(self, rhs):
         try:
             rhs = float(rhs)
@@ -496,6 +488,23 @@ class LRFN:
         except:
             return other/self
 
+    def __pow__(self, other):
+        try:
+            int(other)
+            if other == 1:
+                return self
+            return self**(other-1)
+        except:
+            raise NotImplemented
+
+    def __rpow__(self, other):
+        try:
+            float(other)
+            return LRFN(self.L, self.R, other**self.center, other**self.center-other**(self.center-self.alpha), other**(self.center+self.beta) - other**self.center)
+        except:
+            raise NotImplemented
+
+
     def mu(self, x):
         if x < self.center:
             return self.L((self.center - x)/self.alpha)
@@ -515,7 +524,15 @@ class LRFN:
             dnom += self.mu(lowLim + i * h * (upLim - lowLim))
         return num/dnom
 
-    def toFuzzySet(self, lowLim, upLim, N=1001):
+    def plot(self, N=501):
+        lowLim = self.center - self.alpha
+        upLim = self.center + self.beta
+        h = 1 / N
+        plt.plot([lowLim + i*h*(upLim- lowLim) for i in range(N+1)], [self.mu(lowLim + i*h*(upLim- lowLim)) for i in range(N+1)])
+
+    def toFuzzySet(self, N=1001):
+        lowLim = self.center - self.alpha
+        upLim = self.center + self.beta
         h = 1/N
         elements = [FuzzyElement(lowLim + i*h*(upLim- lowLim), self.mu(lowLim + i*h*(upLim- lowLim))) for i in range(N+1)]
         return FuzzySet(elements)
